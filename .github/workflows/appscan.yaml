@@ -1,0 +1,29 @@
+name: AppScan CodeSweep Security Scan
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  appscan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Run AppScan CodeSweep
+      uses: hcl-tech-software/appscan-codesweep-action@v1
+      with:
+        # These are the CORRECT parameters based on the action source
+        asoc_key: ${{ secrets.APPSCAN_KEY_ID || '' }}
+        asoc_secret: ${{ secrets.APPSCAN_API_KEY || '' }}
+        args: "--output-format sarif --output-file results.sarif ."
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
