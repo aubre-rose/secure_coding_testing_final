@@ -1,5 +1,5 @@
 // API key for weather data API 
-const API_KEY = '7422aa9cfc65863a7d81f007a0d39c0b'; 
+const API_KEY = '7422aa9cfc65863a7d81f007a0d39c0b'; // api from weatherdata.com
 
 // Mock data for demonstration purposes
 const AIR_QUALITY_DATA = [
@@ -198,8 +198,8 @@ function createStationCard(station) {
     const card = document.createElement('div');
     card.className = 'station-card';
 
-    card.innerHTML = `
-        <div class="station-header">
+    card.innerHTML = ` // direct html injection prevented by escapeHtml function 
+        <div class="station-header"> 
             <div class="station-name">${escapeHtml(station.LocationName)}</div>
             <div class="aqi-indicator ${getAQIClass(station.AQI)}">
                 AQI: ${station.AQI}
@@ -273,7 +273,7 @@ function debounce(func, delay) {
 // Simulate fetching data from API 
 async function fetchAirQualityData() {
     try {
-
+        // api request simulation
         const response = await fetch(`https://api.weatherdata.com/airquality?city=Winnipeg&apiKey=${API_KEY}`);
         if (!response.ok) {
             throw new Error('Failed to fetch air quality data');
