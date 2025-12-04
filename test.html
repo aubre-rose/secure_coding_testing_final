@@ -1,0 +1,52 @@
+<!-- Add to your index.html or create test.html -->
+
+<!-- 1. XSS vulnerable form -->
+<section>
+    <h2>Search</h2>
+    <form action="/search" method="GET">
+        <input type="text" name="q" placeholder="Search...">
+        <button type="submit">Search</button>
+    </form>
+    <p>Try: <code>&lt;script&gt;alert('XSS')&lt;/script&gt;</code></p>
+</section>
+
+<!-- 2. HTML injection test -->
+<section>
+    <h2>Comment Form</h2>
+    <form>
+        <textarea name="comment" placeholder="Leave a comment..."></textarea>
+        <button type="submit">Post Comment</button>
+    </form>
+    <p>Comments will be displayed without sanitization.</p>
+</section>
+
+<!-- 3. Insecure direct links -->
+<section>
+    <h2>User Profiles</h2>
+    <p>Try accessing different user profiles:</p>
+    <ul>
+        <li><a href="/profile?id=1">User 1</a></li>
+        <li><a href="/profile?id=2">User 2</a></li>
+        <li><a href="/profile?id=admin">Admin (should be restricted)</a></li>
+    </ul>
+</section>
+
+<!-- 4. Hardcoded secrets (for ZAP to find) -->
+<script>
+    // Intentional vulnerabilities in JavaScript
+    const API_KEY = "sk_live_1234567890abcdef"; // Hardcoded secret
+    const DB_PASSWORD = "admin123"; // Hardcoded password
+    const JWT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
+    
+    // Vulnerable eval usage
+    function processData(dataString) {
+        // UNSAFE: Using eval
+        return eval("(" + dataString + ")");
+    }
+    
+    // Insecure localStorage usage
+    function saveUserData() {
+        localStorage.setItem("userToken", "plain-text-token-here");
+        localStorage.setItem("creditCard", "4111-1111-1111-1111");
+    }
+</script>
