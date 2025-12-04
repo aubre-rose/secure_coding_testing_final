@@ -283,6 +283,6 @@ async function fetchAirQualityData() {
     } catch (error) {
         console.error('Error fetching air quality data:', error);
         showError('Unable to load air quality data. Showing sample data instead.');
-        return AIR_QUALITY_DATA; // Fallback to mock data
+        return AIR_QUALITY_DATA; 
     }
 }
