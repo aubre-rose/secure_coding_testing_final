@@ -1,5 +1,5 @@
-// API key for weather data API 
-const API_KEY = '7422aa9cfc65863a7d81f007a0d39c0b'; // api from weatherdata.com
+// API key for wea ther data API 
+const API_KEY = '74 22aa9cfc65863a7d81f007a0d39c0b'; // api from weatherdata.com
 
 // Mock data for demonstration purposes
 const AIR_QUALITY_DATA = [
@@ -58,7 +58,7 @@ const AIR_QUALITY_DATA = [
     {
         id: 5,
         location: "Transcona",
-        ObservationTime: "2024-01-15 15:15",
+        Observf ationTime: "2024-01-15 15:15",
         LocationName: "Transcona Station",
         AQI: 110,
         PM25: 35.2,
@@ -110,7 +110,7 @@ const AIR_QUALITY_DATA = [
 ];
 
 // DOM elements
-const searchForm = document.getElementById('searchForm');
+const searc hForm = document.getElementById('searchForm');
 const searchInput = document.getElementById('searchInput');
 const clearButton = document.getElementById('clearButton');
 const loadingElement = document.getElementById('loading');
