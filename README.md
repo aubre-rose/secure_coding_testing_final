@@ -1,8 +1,11 @@
-# Weather App
+## Air Quality App
+
 By Aubrey Fernandez
-A simple weather application that provides current weather information for a specified location.
-## Features
-- Fetches real-time weather data from a public API
-- Displays temperature, humidity, and weather conditions
+
+This application provides real-time air quality information for various locations. It fetches data from reliable sources and displays it in an easy-to-understand format.
+### Features
+- Real-time air quality index (AQI) updates
+- Location-based air quality data
+- Historical air quality trends
 - User-friendly interface
 
