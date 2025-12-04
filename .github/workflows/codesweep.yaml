@@ -1,0 +1,162 @@
+name: CodeSweep Security Scan
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  schedule:
+    # Run weekly on Sundays
+    - cron: '0 0 * * 0'
+
+jobs:
+  codesweep:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for better analysis
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci || npm install
+        # Install security scanning tools
+        npm install --save-dev eslint eslint-plugin-security \
+          @typescript-eslint/eslint-plugin @typescript-eslint/parser \
+          audit-ci \
+          dependency-check
+    
+    - name: Run CodeSweep Security Analysis
+      id: codesweep
+      uses: codesweep-ai/codesweep-action@v1
+      with:
+        # API key from GitHub Secrets
+        codesweep_api_key: ${{ secrets.CODESWEEP_API_KEY }}
+        
+        # Configuration options
+        languages: javascript,typescript,html,css
+        fail_on_high_confidence: true
+        fail_on_medium_confidence: false
+        fail_on_low_confidence: false
+        
+        # Ignore specific patterns
+        ignore_paths: |
+          node_modules/
+          dist/
+          build/
+          coverage/
+          *.min.js
+          *.bundle.js
+        
+        # Custom rules for your project
+        custom_rules: |
+          rule: no-hardcoded-api-keys
+          severity: high
+          pattern: 'const.*API.*KEY.*=.*[\'"][A-Za-z0-9]{20,}[\'"]'
+          
+          rule: no-innerhtml-unsanitized
+          severity: high
+          pattern: '\.innerHTML\s*='
+          
+          rule: no-eval-usage
+          severity: critical
+          pattern: 'eval\('
+          
+          rule: no-insecure-fetch
+          severity: medium
+          pattern: 'fetch\(.*\${.*}.*\)'
+    
+    - name: Run ESLint Security Scan
+      run: |
+        npx eslint . \
+          --ext .js,.jsx,.ts,.tsx \
+          --config .eslintrc-security.js \
+          --output-file eslint-security-report.json
+    
+    - name: Run npm audit
+      run: |
+        npm audit --audit-level=high --json > npm-audit-report.json || true
+    
+    - name: Run dependency check
+      run: |
+        npx dependency-check ./package.json --unused --no-dev > dependency-check-report.txt || true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: |
+          *.json
+          *.txt
+        retention-days: 7
+    
+    - name: Comment on Pull Request with findings
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const reportPath = 'eslint-security-report.json';
+          let commentBody = '## 🔍 CodeSweep Security Scan Results\n\n';
+          
+          if (fs.existsSync(reportPath)) {
+            const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            if (report.length > 0) {
+              commentBody += '### ⚠️ ESLint Security Issues Found\n\n';
+              report.forEach(issue => {
+                commentBody += `- **${issue.severity === 2 ? '❌ Error' : '⚠️ Warning'}**: ${issue.message}\n`;
+                commentBody += `  File: \`${issue.filePath}\` (Line ${issue.line})\n`;
+                commentBody += `  Rule: \`${issue.ruleId}\`\n\n`;
+              });
+            } else {
+              commentBody += '### ✅ No ESLint security issues found\n\n';
+            }
+          }
+          
+          // Add CodeSweep results if available
+          if (process.env.CODESWEEP_RESULTS) {
+            commentBody += '### 🔐 CodeSweep AI Analysis\n\n';
+            commentBody += process.env.CODESWEEP_RESULTS;
+          }
+          
+          // Create or update comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const existingComment = comments.find(comment => 
+            comment.body.includes('CodeSweep Security Scan Results')
+          );
+          
+          if (existingComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: commentBody,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody,
+            });
+          }
+    
+    - name: Fail on critical issues
+      if: steps.codesweep.outputs.has_critical_issues == 'true'
+      run: |
+        echo "❌ Critical security issues found!"
+        echo "Please review the CodeSweep report above."
+        exit 1
